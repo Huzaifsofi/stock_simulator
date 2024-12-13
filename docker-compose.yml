@@ -31,6 +31,17 @@ services:
     networks:
       - flask_network
 
+  
+  nginx:
+    image: nginx:alpine
+    container_name: nginx_server
+    volumes:
+      - ./html:/usr/share/nginx/html
+    ports:
+      - "8080:80"
+    networks:
+      - flask_network
+
 
 volumes:
   postgres_data:

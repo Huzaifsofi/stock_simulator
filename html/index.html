@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+<body>
+    <div>
+        <div class="mt-3 mx-3">
+            <button type="button" id="logout" class="btn btn-primary">logout</button>
+        </div>
+
+        <div class="d-flex mt-5  justify-content-center">
+            <i class="bi bi-archive h2"></i>
+            <h2 class="px-2">Stocky</h2>
+        </div>
+        
+        <div class="text-center mt-5">
+            <a href="http://localhost:8080/potfoliyo.html" class="btn btn-primary">
+                <i class="bi bi-person-bounding-box px-2"></i> View account
+            </a>
+        </div>
+
+        <div class="mt-5 mx-5">
+            <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col"></th>
+                    <th scope="col">Name</th>
+                    <th scope="col">price</th>
+                    <th scope="col"></th>
+                  </tr>
+                </thead>
+                <tbody id="stocks-table-body">
+                    <!-- Rows will be dynamically populated here -->
+                </tbody>
+              </table>
+        </div>
+        <div class="d-flex justify-content-between px-5">
+            <button type="button" id="prev-btn" class="btn btn-primary">&lt; prev</button>
+            <button type="button" id="next-btn" class="btn btn-primary">next &gt;</button>
+        </div>
+        
+    </div>
+    <script>
+        const username = localStorage.getItem('username');
+
+        if (username) {
+            console.log(username)
+        } else {
+            // If username doesn't exist, redirect to login page
+            window.location.href = '/login.html'; // Assuming login page is named 'login.html'
+        }
+
+        const logoutbtn = document.getElementById('logout');
+
+        logoutbtn.addEventListener('click', () => {
+            if (username) {
+                localStorage.removeItem('username')
+                window.location.href = '/login.html'
+            }
+        })
+
+
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        // Get the page number from the URL
+        let currentPage = parseInt(getQueryParam('page')) || 1;
+
+        // Set totalPages dynamically or through some API
+        const totalPages = 10; // Update this based on your actual logic
+
+        async function fetchData(page = 1) {
+            try {
+                const response = await fetch(`http://127.0.0.1:5000?page=${page}`);
+                const stocks = await response.json();
+
+                console.log(stocks);
+
+                const tableBody = document.getElementById('stocks-table-body');
+                tableBody.innerHTML = '';
+
+                stocks.forEach((stock, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <th scope="row">${index + 1}</th>
+                        <td>${stock.stock_name}</td>
+                        <td>₹ ${stock.stock_price}</td>
+                        <td>
+                            <button type="button" class="btn btn-success buy-button">Buy</button>
+                        </td>
+                    `;
+
+                    tableBody.appendChild(row);
+
+                    const buyButton = row.querySelector('.buy-button');
+                    buyButton.addEventListener('click', () => {
+                        // Call the function to send the data
+                        buyStock(stock.stock_name, stock.stock_price);
+                    });
+                });
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        }
+
+        async function buyStock(stockName, stockPrice) {
+        try {
+            const response = await fetch('http://127.0.0.1:5000/pot', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: stockName,
+                    price: stockPrice
+                })
+            });
+
+            if (response.ok) {
+                alert(`Stock ${stockName} purchased successfully at RS: ${stockPrice}`);
+            } else {
+                console.error('Failed to purchase stock');
+            }
+        } catch (error) {
+            console.error('Error during purchase:', error);
+            alert('Error occurred while processing the purchase.');
+        }
+    }
+
+
+        fetchData(currentPage);
+
+        document.getElementById('prev-btn').addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                fetchData(currentPage);
+                updateURL(currentPage);
+            }
+        });
+
+        document.getElementById('next-btn').addEventListener('click', () => {
+            if (currentPage < totalPages) {
+                currentPage++;
+                fetchData(currentPage);
+                updateURL(currentPage);
+            }
+        });
+
+        // Update the URL with the current page number
+        function updateURL(page) {
+            const url = new URL(window.location);
+            url.searchParams.set('page', page);
+            window.history.pushState({}, '', url);
+        }
+    </script>
+    <script>
+        // Event listeners for buttons
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+</body>
+</html>
