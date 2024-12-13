@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+
+  flask_app:
+    build: ./backend
+    container_name: flask_app
+    environment:
+      FLASK_APP: app.py
+      DATABASE_URL: postgres://postgres:postgrespassword@postgres:5432/flaskdb
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+    volumes:
+      - ./backend:/app
+    networks:
+      - flask_network
+
+  postgres:
+    image: postgres:16
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: flaskdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - flask_network
+
+
+volumes:
+  postgres_data:
+
+networks:
+  flask_network:
